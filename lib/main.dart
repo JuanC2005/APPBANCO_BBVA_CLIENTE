@@ -1,34 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'navigation/routes.dart';
-import 'viewmodel/auth_viewmodel.dart';
-import 'viewmodel/home_viewmodel.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'providers/auth_provider.dart';
+import 'app.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final container = ProviderContainer();
+  await container.read(authProvider.notifier).checkSession();
+
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthViewModel()),
-        ChangeNotifierProvider(create: (_) => HomeViewModel()),
-      ],
-      child: const MyApp(), // ✅ const
+    UncontrolledProviderScope(
+      container: container,
+      child: const App(),
     ),
   );
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key}); // ✅ const
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'BBVA Home Banking',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'Roboto',
-      ),
-      routerConfig: router,
-    );
-  }
 }
