@@ -142,6 +142,7 @@ class _QuickActions extends StatelessWidget {
         _ActionButton(icon: Icons.payments_outlined, label: 'Pagar', onTap: () => onTap('pago')),
         _ActionButton(icon: Icons.credit_card_outlined, label: 'Tarjetas', onTap: () => onTap('tarjetas')),
         _ActionButton(icon: Icons.description_outlined, label: 'Créditos', onTap: () => onTap('creditos')),
+        _ActionButton(icon: Icons.assignment_outlined, label: 'Solicitudes', onTap: () => onTap('mis-solicitudes')),
       ],
     );
   }

@@ -13,6 +13,9 @@ import 'screens/transferencia_screen.dart';
 import 'screens/pago_screen.dart';
 import 'screens/notificaciones_screen.dart';
 import 'screens/perfil_screen.dart';
+import 'screens/mis_solicitudes_screen.dart';
+import 'screens/nueva_solicitud_screen.dart';
+import 'screens/detalle_solicitud_screen.dart';
 
 class _GoRouterNotifier extends ChangeNotifier {
   _GoRouterNotifier(this._ref) {
@@ -85,6 +88,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'perfil',
             builder: (context, state) => const PerfilScreen(),
+          ),
+          GoRoute(
+            path: 'mis-solicitudes',
+            builder: (context, state) => const MisSolicitudesScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (context, state) => DetalleSolicitudScreen(
+                  solicitudId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
+          ),
+          GoRoute(
+            path: 'nueva-solicitud',
+            builder: (context, state) => const NuevaSolicitudScreen(),
           ),
         ],
       ),
