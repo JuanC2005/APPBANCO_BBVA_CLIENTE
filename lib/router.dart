@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
+import 'screens/registro_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cuentas_screen.dart';
 import 'screens/cuenta_detalle_screen.dart';
@@ -16,6 +17,7 @@ import 'screens/perfil_screen.dart';
 import 'screens/mis_solicitudes_screen.dart';
 import 'screens/nueva_solicitud_screen.dart';
 import 'screens/detalle_solicitud_screen.dart';
+import 'screens/mapa_picker_screen.dart';
 
 class _GoRouterNotifier extends ChangeNotifier {
   _GoRouterNotifier(this._ref) {
@@ -26,10 +28,11 @@ class _GoRouterNotifier extends ChangeNotifier {
 
   String? _redirectLogic(GoRouterState state) {
     final auth = _ref.read(authProvider);
-    final isLoginRoute = state.matchedLocation == '/login';
+    final location = state.matchedLocation;
+    final isPublicRoute = location == '/login' || location == '/registro';
 
-    if (auth.isAuthenticated && isLoginRoute) return '/home';
-    if (!auth.isAuthenticated && !isLoginRoute) return '/login';
+    if (auth.isAuthenticated && isPublicRoute) return '/home';
+    if (!auth.isAuthenticated && !isPublicRoute) return '/login';
     return null;
   }
 }
@@ -44,6 +47,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/registro',
+        builder: (context, state) => const RegistroScreen(),
+      ),
+      GoRoute(
+        path: '/mapa-picker',
+        builder: (context, state) => const MapaPickerScreen(),
       ),
       GoRoute(
         path: '/home',

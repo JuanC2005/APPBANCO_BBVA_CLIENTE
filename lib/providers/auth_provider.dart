@@ -61,6 +61,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> register(Map<String, dynamic> data) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final response = await _api.post('/homebanking/registro', data);
+      final token = response['access_token'] as String;
+      final clienteData = response['cliente'] as Map<String, dynamic>;
+      await SecureStorage.saveToken(token);
+      final user = UserModel.fromJson(clienteData);
+      state = AuthState(isAuthenticated: true, user: user);
+    } on HttpException {
+      state = state.copyWith(isLoading: false, error: 'El número de documento ya está registrado');
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Error de conexión. Verifique su internet.');
+    }
+  }
+
   Future<void> checkSession() async {
     final token = await SecureStorage.getToken();
     if (token != null) {
