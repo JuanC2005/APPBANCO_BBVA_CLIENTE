@@ -6,9 +6,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/api_client_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/solicitudes_provider.dart';
 import '../theme/app_theme.dart';
-import 'mapa_picker_screen.dart';
 
 class NuevaSolicitudScreen extends ConsumerStatefulWidget {
   const NuevaSolicitudScreen({super.key});
@@ -87,60 +87,89 @@ class _NuevaSolicitudScreenState extends ConsumerState<NuevaSolicitudScreen> {
           ),
         );
         final id = solicitud.id;
-        final opcion = await showModalBottomSheet<String>(
-          context: context,
-          builder: (_) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('¿Deseas agregar la ubicación de visita?',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  const Text('Esto ayudará al asesor a encontrarte.',
-                      style: TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.gps_fixed),
-                      label: const Text('Usar mi ubicación actual'),
-                      onPressed: () => Navigator.pop(context, 'gps'),
+        final user = ref.read(authProvider).user;
+
+        if (user?.lat == null) {
+          final opcion = await showModalBottomSheet<String>(
+            context: context,
+            builder: (_) => SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('¿Deseas agregar la ubicación de visita?',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text('Esto ayudará al asesor a encontrarte.',
+                        style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.gps_fixed),
+                        label: const Text('Usar mi ubicación actual'),
+                        onPressed: () => Navigator.pop(context, 'gps'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.map),
-                      label: const Text('Elegir en el mapa'),
-                      onPressed: () => Navigator.pop(context, 'mapa'),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.map),
+                        label: const Text('Elegir en el mapa'),
+                        onPressed: () => Navigator.pop(context, 'mapa'),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, 'skip'),
-                    child: const Text('Ahora no'),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, 'skip'),
+                      child: const Text('Ahora no'),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-        if (opcion == 'gps' || opcion == 'mapa') {
+          );
+
           double? lat, lng;
           if (opcion == 'gps') {
             final pos = await Geolocator.getCurrentPosition();
-            lat = pos.latitude;
-            lng = pos.longitude;
-          } else {
+            if (mounted) {
+              final confirmado = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Registrar ubicación'),
+                  content: const Text(
+                    '¿Está seguro de registrar esta ubicación como la de su negocio?\n\n'
+                    'No podrá modificarla después.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancelar'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Confirmar'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmado == true) {
+                lat = pos.latitude;
+                lng = pos.longitude;
+              }
+            }
+          } else if (opcion == 'mapa' && mounted) {
             final result = await context.push<Map<String, dynamic>>('/mapa-picker');
             if (result != null) {
               lat = result['lat'] as double;
               lng = result['lng'] as double;
             }
           }
+
           if (lat != null && lng != null && mounted) {
             final api = ref.read(apiClientProvider);
             await api.put('/homebanking/solicitudes/$id/ubicacion', {
@@ -149,8 +178,10 @@ class _NuevaSolicitudScreenState extends ConsumerState<NuevaSolicitudScreen> {
             });
           }
         }
+
         if (mounted) {
           ref.invalidate(solicitudesProvider);
+          ref.read(authProvider.notifier).checkSession();
           context.go('/home/mis-solicitudes');
         }
       }

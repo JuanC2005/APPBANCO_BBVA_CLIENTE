@@ -32,10 +32,35 @@ class _MapaPickerScreenState extends State<MapaPickerScreen> {
     super.dispose();
   }
 
-  void _confirmar() => Navigator.pop(context, {
+  Future<void> _confirmar() async {
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Registrar ubicación'),
+        content: const Text(
+          '¿Está seguro de registrar esta ubicación como la de su negocio?\n\n'
+          'No podrá modificarla después.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado == true && mounted) {
+      Navigator.pop(context, {
         'lat': _posicion.latitude,
         'lng': _posicion.longitude,
       });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
