@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api_client.dart';
@@ -54,10 +55,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await SecureStorage.saveToken(token);
       final user = UserModel.fromJson(clienteData);
       state = AuthState(isAuthenticated: true, user: user);
-    } on HttpException {
-      state = state.copyWith(isLoading: false, error: 'Credenciales incorrectas');
+    } on HttpException catch (e) {
+      state = state.copyWith(isLoading: false, error: 'Credenciales incorrectas ($e)');
+    } on SocketException catch (e) {
+      state = state.copyWith(isLoading: false, error: 'No hay conexión a internet. (${e.message})');
+    } on TimeoutException catch (e) {
+      state = state.copyWith(isLoading: false, error: 'El servidor tardó demasiado en responder. (${e.message})');
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Error de conexión. Verifique su internet.');
+      state = state.copyWith(isLoading: false, error: 'Error inesperado: ${e.toString()}');
     }
   }
 
@@ -70,10 +75,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await SecureStorage.saveToken(token);
       final user = UserModel.fromJson(clienteData);
       state = AuthState(isAuthenticated: true, user: user);
-    } on HttpException {
-      state = state.copyWith(isLoading: false, error: 'El número de documento ya está registrado');
+    } on HttpException catch (e) {
+      state = state.copyWith(isLoading: false, error: 'El número de documento ya está registrado ($e)');
+    } on SocketException catch (e) {
+      state = state.copyWith(isLoading: false, error: 'No hay conexión a internet. (${e.message})');
+    } on TimeoutException catch (e) {
+      state = state.copyWith(isLoading: false, error: 'El servidor tardó demasiado en responder. (${e.message})');
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Error de conexión. Verifique su internet.');
+      state = state.copyWith(isLoading: false, error: 'Error inesperado: ${e.toString()}');
     }
   }
 
